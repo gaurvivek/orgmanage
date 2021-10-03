@@ -1,12 +1,12 @@
 # OrgManage
-To organization employee tasks and view reports using react application
+Organization employee tasks and view reports using react application
 
 This is a open project to manage organization employees.
 
 # Login
 Use below login credentials
-Email: hruday@gmail.com
-Password: hruday123
+* Email: hruday@gmail.com
+* Password: hruday123
 
 # Features
 1. React js application
@@ -50,9 +50,12 @@ highcharts, react-notifications, classnames
 3. open browser and paste `http://localhost:3000`
 
 # Below are images of project
-# Dashboard
+# Login page
+Use below login credentials
+* Email: hruday@gmail.com
+* Password: hruday123
 ![Dashboard](./public/login.png "Title")
-# Projects and manage project
+# Dashboard
 ![Dashboard](./public/org_dashboard.png "Title")
-# Tasks and manage tasks
+# Manage employees
 ![Dashboard](./public/org_emp.png "Title")
