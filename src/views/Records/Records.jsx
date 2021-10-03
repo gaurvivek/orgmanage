@@ -40,32 +40,22 @@ import AddProject from "./ProjectPopup"
 import { basePath, baseRoutes } from "base-routes";
 import Icon from '@material-ui/core/Icon';
 import { Link } from "react-router-dom";
-import { projectList, reduxLoad } from 'js/actions';
+import { empList, reduxLoad } from 'js/actions';
 
 am4core.useTheme(am4themes_animated);
-const columns = [
-  { id: "projectName", label: "Project Name" },
-  { id: "projectDesc", label: "Project Description" },
-  { id: "projectDesc", label: "Total Tasks" },
-  { id: "projectDesc", label: "Tasks List" },
-  { id: "createDate", label: "Created Date" },
-  { id: "projectDesc", label: "Actions" },
-];
 const ref = React.createRef();
 function mapDispatchToProps(dispatch) {
   return {
     // addArticle: article => dispatch(addArticle(article))
-    projectList: projects => dispatch(projectList(projects))
+    empList: projects => dispatch(empList(projects))
   };
 }
 const mapStateToProps = state => {
   return {
-    userInfo: state.userInfo,
     timestamp: state.timestamp,
     campaings: state.campaings,
     reduxLoadFlag: state.reduxLoadFlag,
-    projectListArr: state.projectList,
-    taskListArr: state.taskList,
+    empListArr: state.empList,
   };
 };
 class RecordClass extends React.Component {
@@ -82,26 +72,24 @@ class RecordClass extends React.Component {
       timeStampVal: new Date().toLocaleTimeString(),
       reduxLoadFlag: false,
       openProjects: false,
-      projectListArr: this.props.projectListArr ? this.props.projectListArr : [],
-      taskList: this.props.taskListArr ? this.props.taskListArr : [],
+      empListArr: this.props.empListArr ? this.props.empListArr : [],
       projectId: "",
       search: "",
     };
     this.handleChangePage = this.handleChangePage.bind(this);
     this.handleChangeRowsPerPage = this.handleChangeRowsPerPage.bind(this);
     this.confirmModalClose = this.confirmModalClose.bind(this);
-    this.filterProjects = this.filterProjects.bind(this);
+    this.filterEmps = this.filterEmps.bind(this);
     this.handleInput = this.handleInput.bind(this);
   }
 
   componentDidMount() {
-    document.title = 'Projects';
+    document.title = 'Employees';
   }
   handleChangePage = async (event, newPage) => {
     this.setState({
       page: newPage
     });
-    // setPage(newPage);
   };
   handleChangeRowsPerPage(event) {
     this.setState({
@@ -115,55 +103,23 @@ class RecordClass extends React.Component {
       search: value,
     })
   }
-  filterProjects() {
-    const allProjects = this.props.projectListArr;
+  filterEmps() {
+    const allEmp = this.props.empListArr;
     const searchRes = this.state.search;
-    console.log(searchRes, allProjects, this.state.search)
     if (!searchRes) {
       this.setState({
-        projectListArr: allProjects
+        empListArr: allEmp
       })
       return false;
     }
-    const updatedProjects = allProjects.filter((pList) => {
-      if (pList.projectName.toLowerCase().includes(searchRes.toLowerCase()) || pList.projectDesc.toLowerCase().includes(searchRes.toLowerCase())) {
+    const updatedEmps = allEmp.filter((pList) => {
+      if (pList.name.toLowerCase().includes(searchRes.toLowerCase()) || pList.email.toLowerCase().includes(searchRes.toLowerCase()) || pList.phoneNo.includes(searchRes.toLowerCase()) || pList.age.includes(searchRes.toLowerCase()) || pList.gender.toLowerCase().includes(searchRes.toLowerCase())) {
         return pList;
       }
     })
     this.setState({
-      projectListArr: updatedProjects
+      empListArr: updatedEmps
     })
-  }
-  validateField = (fieldName, fieldValue) => {
-    let fieldValidationErrors = this.state.formErrors;
-    let startDateValid = this.state.startDateValid;
-    let endDateValid = this.state.endDateValid;
-
-    switch (fieldName) {
-      case "startDate":
-        startDateValid = (fieldValue && fieldValue != "") ? true : false;
-        fieldValidationErrors.startDate = !startDateValid
-          ? enMsg.startDateRequiredMsg
-          : "";
-        break;
-      case "endDate":
-        endDateValid = (fieldValue && fieldValue != "") ? true : false;
-        fieldValidationErrors.endDate = !endDateValid
-          ? enMsg.endDateRequiredMsg
-          : "";
-        break;
-    }
-    this.setState({
-      formErrors: fieldValidationErrors,
-      startDateValid: startDateValid,
-      endDateValid: endDateValid,
-    }, this.validateForm);
-  }
-  validateForm() {
-    return (
-      this.state.startDateValid &&
-      this.state.endDateValid
-    )
   }
   openProjects() {
     this.setState({ openProjects: true })
@@ -172,67 +128,36 @@ class RecordClass extends React.Component {
     this.setState({
       projectId: "",
       openProjects: false,
-      projectListArr: this.props.projectListArr,
+      empListArr: this.props.empListArr,
     })
   }
-  GetTaskCount = (pId, tList) => {
-    const filteredTasks = tList.filter((list) => {
-      if (list.projectId == pId) {
-        return list
-      }
-    })
-    return filteredTasks.length;
-  }
-  GetTaskList = (pId, tList) => {
-    const taskList = {}
-    tList.map((list) => {
-      if (list.projectId == pId) {
-        console.log(list.taskStatus)
-        if (list.taskStatus == "new") {
-          taskList.new = taskList.new ? taskList.new + 1 : 1;
-        } else if (list.taskStatus == "progress") {
-          taskList.progress = taskList.progress ? taskList.progress + 1 : 1;
-        } else {
-          taskList.done = taskList.done ? taskList.done + 1 : 1;
-        }
-      }
-    })
-    console.log(taskList)
-    return (
-      <div>
-        {taskList.done ? <p>Done: {taskList.done}</p> : null}
-        {taskList.new ? <p>New: {taskList.new}</p> : null}
-        {taskList.progress ? <p>Progress: {taskList.progress}</p> : null}
-      </div>
-    )
-  }
-  editProject(projectId) {
+  editEmps(empId) {
     this.setState({
-      projectId: projectId,
+      empId: empId,
       openProjects: true,
     })
   }
-  deleteProject(projectId) {
-    const projectListArr = this.state.projectListArr;
-    const updatedTaskList = projectListArr.filter((tList) => {
-      return tList.uid == projectId ? null : tList;
+  deleteEmp(empId) {
+    const empListArr = this.state.empListArr;
+    const updatedEmpList = empListArr.filter((tList) => {
+      return tList.id == empId ? null : tList;
     })
-    this.props.projectList(updatedTaskList);
+    this.props.empList(updatedEmpList);
     this.setState({
-      projectListArr: updatedTaskList,
+      empListArr: updatedEmpList,
     })
   }
   render() {
     const { classes } = this.props;
     const {
-      openProjects, projectListArr, taskList, projectId, search
+      openProjects, empListArr, empId, search
     } = this.state;
     console.log(search)
     return (
       <div className="recordFormRow">
         <span className="box-with-bg">
-          <AddProject projectId={projectId} openProjects={openProjects} confirmModalClose={this.confirmModalClose} />
-          <div className="recordFormHead white-text">My Projects</div>
+          <AddProject empId={empId} openProjects={openProjects} confirmModalClose={this.confirmModalClose} />
+          <div className="recordFormHead white-text">Employees</div>
           <div className="full-width text-right">
             <div className="recordFormCol widthauto">
               <Button
@@ -248,7 +173,7 @@ class RecordClass extends React.Component {
                       color="secondary"
                     />
                   )}
-                  Add Project
+                  Add Employee
                 </p>
               </Button>
             </div>
@@ -272,7 +197,7 @@ class RecordClass extends React.Component {
               <Button
                 className="client newbtn greenbtn"
                 type="button"
-                onClick={() => this.filterProjects()}
+                onClick={() => this.filterEmps()}
               >
                 <p>
                   {this.state.loading && (
@@ -298,22 +223,20 @@ class RecordClass extends React.Component {
                       <Table>
                         <TableHead className={this.tableh}>
                           <TableRow>
-                            {columns.map(column => (
-                              <TableCell
-                                key={column.id}
-                                align={column.align}
-                                style={{ minWidth: column.minWidth }}
-                              >
-                                {column.label}
-                              </TableCell>
-                            ))}
+                            <TableCell>Name</TableCell>
+                            <TableCell>Email</TableCell>
+                            <TableCell>Phone</TableCell>
+                            <TableCell>Age</TableCell>
+                            <TableCell>Gender</TableCell>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody key="TableBody">
                           {
-                            this.state.projectListArr.length &&
-                              this.state.projectListArr.length
-                              ? this.state.projectListArr
+                            this.state.empListArr.length &&
+                              this.state.empListArr.length
+                              ? this.state.empListArr
                                 .slice(
                                   this.state.page * this.state.rowsPerPage,
                                   this.state.page * this.state.rowsPerPage +
@@ -327,53 +250,32 @@ class RecordClass extends React.Component {
                                       tabIndex={-1}
                                       key={key}
                                     >
-                                      <TableCell>{row.projectName}</TableCell>
-                                      <TableCell>{row.projectDesc}</TableCell>
-                                      <TableCell>
-                                        {
-                                          taskList && taskList.length
-                                            ?
-                                            this.GetTaskCount(row.uid, taskList)
-                                            :
-                                            "No task"
-                                        }
-                                      </TableCell>
-                                      <TableCell>
-                                        {
-                                          taskList && taskList.length
-                                            ?
-                                            this.GetTaskList(row.uid, taskList)
-                                            :
-                                            "No task"
-                                        }
-                                      </TableCell>
+                                      <TableCell>{row.name}</TableCell>
+                                      <TableCell>{row.email}</TableCell>
+                                      <TableCell>{row.phoneNo}</TableCell>
+                                      <TableCell>{row.age}</TableCell>
+                                      <TableCell>{row.gender}</TableCell>
                                       <TableCell>{new Date(row.createDate).toDateString()}</TableCell>
                                       <TableCell>
-                                        <span className="edit-action">
+                                        {/* <span className="edit-action">
                                           <Link
                                             underline="none"
                                             to={
                                               {
                                                 pathname: basePath + baseRoutes.tasks.path,
-                                                state: row.uid
+                                                state: row.id
                                               }
                                             }
                                           >
                                             <Icon className="fa fa-eye" aria-hidden="true" style={{ color: "#fff" }} />
                                           </Link>
+                                        </span> */}
+                                        <span className="edit-action">
+                                          <Icon className="fa fa-pencil" aria-hidden="true" style={{ color: "#fff" }} onClick={() => this.editEmps(row.id)} />
                                         </span>
                                         <span className="edit-action">
-                                          <Icon className="fa fa-pencil" aria-hidden="true" style={{ color: "#fff" }} onClick={() => this.editProject(row.uid)} />
+                                          <Icon className="fa fa-trash" aria-hidden="true" style={{ color: "#fff" }} onClick={() => this.deleteEmp(row.id)} />
                                         </span>
-                                        {
-                                          this.GetTaskCount(row.uid, taskList) == 0
-                                            ?
-                                            <span className="edit-action">
-                                              <Icon className="fa fa-trash" aria-hidden="true" style={{ color: "#fff" }} onClick={() => this.deleteProject(row.uid)} />
-                                            </span>
-                                            :
-                                            null
-                                        }
                                       </TableCell>
                                     </TableRow>
                                   );
@@ -393,9 +295,9 @@ class RecordClass extends React.Component {
                     rowsPerPageOptions={PER_PAGE_OPTIONS}
                     component="div"
                     count={
-                      this.state.projectListArr.length &&
-                        this.state.projectListArr.length
-                        ? this.state.projectListArr.length
+                      this.state.empListArr.length &&
+                        this.state.empListArr.length
+                        ? this.state.empListArr.length
                         : 0
                     }
                     rowsPerPage={this.state.rowsPerPage}

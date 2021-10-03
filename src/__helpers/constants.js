@@ -35,3 +35,4 @@ export const DEFAULT_PROFILE_IMG = dummy;
 export const DEFAULT_PROFILE_IMG_PNG = dummyPng;
 export const NO_USERNAME = "Anonymous_USER";
 export const REDUX_STATE_DATA = "_redux_state_data";
+export const USER_INFO = "_user_info";

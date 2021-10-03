@@ -25,81 +25,29 @@
 import React from "react";
 // nodejs library to set properties for components
 import PropTypes from "prop-types";
-import classNames from "classnames";
-// @material-ui/core components
-import Poppers from "@material-ui/core/Popper";
 import {
-  Icon,
-  styles,
-  MenuItem,
-  MenuList,
-  Grow,
-  Paper,
-  ClickAwayListener,
-  Hidden,
-  Divider,
   withStyles,
-  Avatar,
-  Select,
-  FormGroup,
-  InputLabel,
-  FormControl,
-  Input,
-  CircularProgress
 } from "@material-ui/core/";
-// @material-ui/icons
-import Person from "@material-ui/icons/Person";
-import Notifications from "@material-ui/icons/Notifications";
-import Dashboard from "@material-ui/icons/Dashboard";
-import Search from "@material-ui/icons/Search";
-import SelectAllTwoTone from "@material-ui/icons/SelectAllTwoTone";
-
-// core components
-import CustomInput from "components/CustomInput/CustomInput.jsx";
-import Button from "components/CustomButtons/Button.jsx";
-
 import headerLinksStyle from "assets/jss/material-dashboard-react/components/headerLinksStyle.jsx";
-import dummy from "assets/img/dummy.png";
-import { sizeHeight } from "@material-ui/system";
-import { Link, useHistory } from "react-router-dom";
-import { baseRoutes, basePath } from "base-routes";
-import { layout } from "admin-routes";
-import { userService } from "_services/user.service";
-import { DEFAULT_PROFILE_IMG, NO_USERNAME } from "__helpers/constants";
-import GridItem from "components/Grid/GridItem";
-import GridContainer from "components/Grid/GridContainer.jsx";
-import dropdown from "assets/img/dropdown.png";
-import { withRouter } from 'react-router'
-
 import { connect } from "react-redux";
 import {
-  addUSerUInfo,
   reduxLoad,
-  addTimeStamp,
-
-  countryList,
-  globalLists,
+  addTimeStamp, empList
 } from "../../js/actions/index";
-import { ANALYTICS_CSV_DATA } from "__helpers/constants";
-import { ANALYTICS_CSV_ADVERTISEMENT_DATA } from "__helpers/constants";
-
 function mapDispatchToProps(dispatch) {
   return {
-    addUSerUInfo: addUSerUInfoVal => dispatch(addUSerUInfo(addUSerUInfoVal)),
-    countryList: countryListVal => dispatch(countryList(countryListVal)),
-    globalLists: globalListsVal => dispatch(globalLists(globalListsVal)),
     addTimeStamp: addTimeStampVal => dispatch(addTimeStamp(addTimeStampVal)),
     reduxLoad: reduxLoadVal => dispatch(reduxLoad(reduxLoadVal)),
+    empList: empListVal => dispatch(empList(empListVal)),
   };
 }
 const mapStateToProps = state => {
-  // console.log("StateVal "+JSON.stringify(state));
   return {
     userInfo: state.userInfo,
     loadingFlag: state.loadingFlag,
     timestamp: state.timestamp,
     reduxLoadFlag: state.reduxLoadFlag,
-    globalLists: state.globalLists,
+    empListArr: state.empList,
   };
 };
 class AdnetworkSelectFn extends React.Component {
@@ -109,29 +57,11 @@ class AdnetworkSelectFn extends React.Component {
     let spinner = document.getElementById('loadingSpinner');
     this.state = {
       openNotifcation: false,
-      
       loadSpinner: false,
       spinner: spinner,
       loading: false,
-
-      articles: [],
-      userInfo: [],
-      adNetwork: [],
-      loadingFlag: false,
-      adCategories: [],
-      adBrands: [],
-      adStatus: [],
-      adMedium: [],
-      adType: [],
-      assetType: [],
-      assetDisplayType: [],
-      campaignStatus: [],
-      advertisements: [],
-      campaings: [],
-      assets: [],
-      vendors: [],
-      timestamp: "",
       reduxLoadFlag: false,
+      empListArr: this.props.empListArr,
     };
     this.fetchData = this.fetchData.bind(this)
   }
@@ -140,64 +70,71 @@ class AdnetworkSelectFn extends React.Component {
     this.fetchData();
   }
   async fetchData() {
-    // alert("mm")
     this.props.reduxLoad(true);
-    let globalLists = {};
-    let apiUrl = "http://35.193.238.179:9090/api/pollution/data";
-    let pollutionData = await userService.fetchGlobalApisWithoutAuth(apiUrl);
-    globalLists.pollutionData = pollutionData;
-
-    this.props.globalLists(globalLists);
-    console.log(pollutionData)
+    const userList = [{
+      "id": 1,
+      "name": "test1",
+      "age": "11",
+      "gender": "male",
+      "email": "test1@gmail.com",
+      "phoneNo": "9415346313",
+      createDate: new Date()
+    },
+    {
+      "id": 2,
+      "name": "test2",
+      "age": "12",
+      "gender": "male",
+      "email": "test2@gmail.com",
+      "phoneNo": "9415346314",
+      createDate: new Date(),
+    },
+    {
+      "id": 3,
+      "name": "test3",
+      "age": "13",
+      "gender": "male",
+      "email": "test3@gmail.com",
+      "phoneNo": "9415346315",
+      createDate: new Date(),
+    },
+    {
+      "id": 4,
+      "name": "test4",
+      "age": "14",
+      "gender": "male",
+      "email": "test4@gmail.com",
+      "phoneNo": "9415346316",
+      createDate: new Date(),
+    },
+    {
+      "id": 5,
+      "name": "test5",
+      "age": "15",
+      "gender": "male",
+      "email": "test5@gmail.com",
+      "phoneNo": "9415346317",
+      createDate: new Date(),
+    },
+    {
+      "id": 6,
+      "name": "test6",
+      "age": "16",
+      "gender": "male",
+      "email": "test6@gmail.com",
+      "phoneNo": "9415346318",
+      createDate: new Date(),
+    }]
+    // add user if not exists
+    const empListArr = this.state.empListArr;
+    if (!empListArr || !empListArr.length) {
+      this.props.empList(userList);
+    }
     setTimeout(function () {
       this.props.reduxLoad(true);
-      // this.state.spinner.setAttribute('hidden', 'true');
-      // localStorage.setItem(DATA_LOADING, true);
     }.bind(this), 500);
   }
-  handleToggleNotification = () => {
-    this._isMounted && this.setState(state => ({
-      openNotifcation: !state.openNotifcation,
-      reduxLoadFlag: false,
-    }));
-  };
-  handleCloseNotification = event => {
-    if (this.anchorNotification.contains(event.target)) {
-      return;
-    }
-    this.setState({ openNotifcation: false });
-  };
-  handleSelectAdnetwork(eventId) {
-  }
   render() {
-    const { classes } = this.props;
-    const { openNotifcation, openProfile, adnetworkId, adnetworkData, adNetworkJson } = this.state;
-    const user_image = "user-image";
-    const styleuser = {
-      borderRadius: "50%",
-      width: "35px",
-      height: "35px"
-    };
-    const userNameStyle = {
-      float: "right",
-      display: "block",
-      width: "calc(100% - 50px)",
-      color: "#000",
-      fontSize: "13px",
-      fontWeight: "500",
-      lineHeight: "normal",
-      marginTop: "10px"
-    };
-    const logoutStyle = {
-      float: "right",
-      display: "block",
-      width: "calc(100% - 50px)",
-      color: "#2b73cd",
-      fontSize: "13px",
-      fontWeight: "500",
-      lineHeight: "normal",
-      marginTop: "4px"
-    };
     return (
       <div className="addNetworkBtnCover">
       </div>

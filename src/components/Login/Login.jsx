@@ -1,115 +1,88 @@
 import React, { Component, useReducer } from "react";
-import { Button, FormGroup, TextField } from "@material-ui/core";
-
+import { Button, FormGroup, TextField, Checkbox, FormControlLabel, Slide } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { Link } from "react-router-dom";
-
-import logo from "assets/img/front-logo.png";
-
+import "assets/css/login.css";
+import logo from "assets/img/wLogo.png";
 import { basePath, baseRoutes } from "base-routes";
 import { FormErrors } from "./FormErrors";
 import fetch from "isomorphic-fetch";
-
-import { apiPath } from "api";
-
 import { store } from "react-notifications-component";
 import { userService } from "_services/user.service";
 import enMsg from "__helpers/locale/en/en";
-import { EMAIL_REGEX } from "__helpers/constants";
 import { clientTokenHeader } from "__helpers/auth-header";
-import { NotificationContainer } from "react-notifications";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import Dialog from "@material-ui/core/Dialog";
-import ReactNotifications from 'react-browser-notifications';
-class AdblockDetect extends Component {
-  state = {
-    usingAdblock: false,
-  }
+import { connect } from "react-redux";
+import {
+  userdata, authData,
+  reduxLoad,
+} from "../../js/actions/index";
+import { DATA_LOADING } from "__helpers/constants";
+import { USER_INFO, EMAIL_REGEX, MAX_PASSWORD_LENGTH } from "__helpers/constants";
+import { accessToken } from "__helpers/utils";
 
-  componentDidMount() {
-    this.setState({ usingAdblock: this.fakeAdBanner.offsetHeight === 0 });
-  }
-
-  render() {
-    if (this.state.usingAdblock === true) {
-      return this.props.children;
-    }
-
-    return (
-      <div
-        ref={r => (this.fakeAdBanner = r)}
-        style={{ height: '1px', width: '1px', visiblity: 'none', pointerEvents: 'none' }}
-        className="adBanner"
-      />
-    );
-  }
+function mapDispatchToProps(dispatch) {
+  return {
+    userdata: userdataVal => dispatch(userdata(userdataVal)),
+    authData: authDataVal => dispatch(authData(authDataVal)),
+    reduxLoad: reduxLoadVal => dispatch(reduxLoad(reduxLoadVal)),
+  };
 }
-
-export default class Login extends Component {
+const mapStateToProps = state => {
+  return {
+    userdataCal: state.userdata,
+    reduxLoadFlag: state.reduxLoadFlag,
+  };
+};
+class LoginClass extends Component {
   constructor(props) {
     super(props);
-
-    let userInfo = JSON.parse(localStorage.getItem("user"));
-    let tokenTimeStamp = localStorage.getItem("tokenTimeStamp");
-    let currentTimeStamp = new Date().getTime();
-    let timeFlag = false;
-    if(!userInfo ||!tokenTimeStamp){
-      userService.logout();
-    }
     userService.logout();
-    this._isMounted = false; 
+    let spinner = document.getElementById('loadingSpinner');
     this.state = {
       email: "",
       username: "",
       password: "",
-      grantType: "",
-      scope: "",
-      formErrors: { username: "", password: "" },
+      formErrors: { email: "", password: "" },
       emailValid: false,
       passwordValid: false,
       formValid: false,
-      apiPath: apiPath.login,
       loading: false,
-      showNotification: {},
-      open: true,
-      other: undefined,
-      accessToken: (userInfo && userInfo.accessToken) ? userInfo.accessToken : [],
-      tokenTimeStamp: (tokenTimeStamp) ? tokenTimeStamp : currentTimeStamp,
-      timeFlag: timeFlag,
+      isRemember: false,
+      passwordType: "password",
+      reduxLoadFlag: false,
+      spinner: spinner,
+      userdataCal: this.props.userdataCal,
     };
     this.clientAuthToken = null;
-    this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleCloseDialog = this.handleCloseDialog.bind(this);
-    this.showNotifications = this.showNotifications.bind(this);
   }
-
-  handleChange = event => {
-    // this.setState({
-    //   [event.target.id]: event.target.value
-    // });
-  };
 
   handleUserInput = e => {
     const name = e.target.name;
     const value = e.target.value;
-
     this.setState({ [name]: value }, () => {
       this.validateField(name, value);
     });
   };
-
   validateField(fieldName, value) {
     let fieldValidationErrors = this.state.formErrors;
     let emailValid = this.state.emailValid;
     let passwordValid = this.state.passwordValid;
-
+    console.log(fieldName, value)
     switch (fieldName) {
       case "email":
-        emailValid = value.match(EMAIL_REGEX);
-        fieldValidationErrors.email = emailValid ? "" : enMsg.inValidEmail;
+        if (value.trim().length == 0) {
+          emailValid = false;
+          fieldValidationErrors.email = enMsg.emailRequiredMsg;
+        }
+        else if (!value.trim().match(EMAIL_REGEX)) {
+          emailValid = false;
+          fieldValidationErrors.email = enMsg.inValidUser;
+        }
+        else {
+          emailValid = true;
+          fieldValidationErrors.email = '';
+        }
         break;
       case "password":
         let error = "";
@@ -117,9 +90,9 @@ export default class Login extends Component {
         if (!value.trim().length) {
           passwordValid = false;
           error = enMsg.passwordRequired;
-        } else if (value.length < 6) {
+        } else if (value.length < 2) {
           passwordValid = false;
-          error = enMsg.shortPassword;
+          error = enMsg.passwordSort;
         }
         fieldValidationErrors.password = error;
         break;
@@ -137,204 +110,89 @@ export default class Login extends Component {
       this.validateForm
     );
   }
-
   validateForm() {
     return this.state.emailValid && this.state.passwordValid;
   }
-  showNotifications() {
-    // If the Notifications API is supported by the browser
-    // then show the notification
-    // if(this.n.supported()) this.n.show();
-  }
-
   componentDidMount = () => {
-    this._isMounted = true; 
-    userService.generateClientAouth();
     const spinner = document.getElementById('loadingSpinner');
     if (spinner && !spinner.hasAttribute('hidden')) {
       spinner.setAttribute('hidden', 'true');
     }
-    this.showNotifications();
-    let currentTimeStamp = new Date().getTime();
+    document.title = 'Login';
+    // add username and password in redux
+    if (!this.state.userdataCal || !this.state.userdataCal.userName) {
+      const data = {
+        userName: "hruday@gmail.com",
+        name: "Admin",
+        age: 25,
+        phoneNo: "9876543210",
+        gender: "male",
+        password: btoa("hruday123")
+      }
+      this.props.userdata(data)
+      this.setState({
+        userdataCal: data,
+      })
+    }
+
   };
-
-  componentWillUnmount() {
-    this._isMounted = false;
-  }
-
-  componentWillMount = () => {
-    const req = null;
-    const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  };
-
-  handleChange(event) {
-    this.setState({ username: event.target.value });
-  }
-
-  componentDidCatch(error, info) {
-    // Display fallback UI
-    // You can also log the error to an error reporting service
-    //    logErrorToMyService(error, info);
-  }
-  handleCloseDialog = e => {
-    // this.setState({
-    //   open: false,
-    // })
-    window.location.reload();
-  };
-
   async handleSubmit(event) {
+    this.props.reduxLoad(false);
     this.setState({ loading: true });
     event.preventDefault();
     const data = {
-      username: this.state.email,
-      password: this.state.password,
-      grantType: "password",
-      scope: "user"
+      userName: this.state.email,
+      password: btoa(this.state.password),
     };
-
     let showNotification = {};
-
-    try {
-      const response = await fetch(this.state.apiPath, {
-        method: "POST",
-        // mode: "no-cors", // cors, *cors, same-origin"
-        headers: clientTokenHeader(),
-        body: JSON.stringify(data),
-        data: JSON.stringify(data)
-      })
-        .then(response => {
-          if (response.status === 400) {
-            showNotification = {
-              title: enMsg.loginFailedTitle,
-              message: enMsg.inValidCredentials,
-              type: "danger"
-            };
-          } else if (response.ok) {
-            let accessToken = response.headers.get("Authorization");
-
-            if (accessToken !== undefined) {
-              let userData = window.btoa(data.username + ":" + data.password);
-              // userData = window.btoa(userData);
-              let user = {
-                authdata: window.btoa(userData),
-                accessToken: accessToken
-              };
-              
-              localStorage.setItem("user", JSON.stringify(user));
-              window.location.replace(baseRoutes.dashboard.path);
-              // this.props.history.push(baseRoutes.dashboard.path);
-              return;
-            }
-          } else {
-            showNotification = {
-              title: enMsg.loginFailedTitle,
-              message: enMsg.inValidCredentials,
-              type: "danger"
-            };
-            let error = new Error(response.statusText);
-          }
-          // return response.json();
-          return response.text();
-        })
-        .then(response => {
-          return true;
-        })
-        .catch(error => {
-          showNotification = {
-            title: enMsg.loginFailedTitle,
-            message: enMsg.networkFailedError,
-            type: "danger"
-          };
-
-          return response;
-        });
-
-      // throw new Error(error);
-    } catch (error) {
+    console.log(data, this.props.userdataCal)
+    let userDetail = this.props.userdataCal;
+    if (data.userName == userDetail.userName && data.password == userDetail.password) {
+      let accessTokenGen = btoa(btoa(data.userName) + btoa(data.password))
+      let user = {
+        accessToken: accessTokenGen,
+        userRole: "ADMIN",
+        userName: this.state.email,
+      };
+      this.props.authData(user)
       showNotification = {
         title: enMsg.loginFailedTitle,
-        message: enMsg.networkFailedError,
+        message: "Login successfully.",
+        type: "success"
+      };
+      window.location.replace(baseRoutes.dashboard.path);
+    } else {
+      showNotification = {
+        title: enMsg.loginFailedTitle,
+        message: "Invalid credentials, please refer read me file for login credentials.",
         type: "danger"
       };
     }
-
-    if (
-      showNotification !== undefined &&
-      showNotification.title !== undefined &&
-      showNotification.message !== undefined &&
-      showNotification.type !== undefined
-    ) {
-      this.notificationID = store.removeNotification(this.notificationID);
-      if (this.notificationID == undefined) {
-        let notifiaciton = {
-          title: showNotification.title,
-          message: showNotification.message,
-          type: showNotification.type
-        };
-        this.notificationID = store.addNotification(notifiaciton);
-      }
-      userService.showNotification(showNotification)
-    }
-
-    this._isMounted && this.setState({ loading: false });
-    /* set notification config */
-    // this.setState({ showNotification: showNotification });
-    // this.forceUpdate();
+    this.setState({ loading: false });
+    userService.showNotification(showNotification)
+  }
+  changePasswordType = e => {
+    let passwordType = (this.state.passwordType == "password") ? "text" : "password";
+    this.setState({
+      passwordType: passwordType
+    });
   }
   render() {
     return (
-      <div className="login-outer-cover">
-        <ReactNotifications
-          onRef={ref => (this.n = ref)} // Required
-          title="ASG" // Required
-          body="Welcome as ASG application"
-          icon="icon.png"
-          tag="welcome"
-          timeout="1000"
-          onClick={event => this.handleClick(event)}
-        />
-        {/* <NotificationContainer/> */}
-        <div className="login-cover gray-bg-color">
-          <AdblockDetect>
-            <Dialog
-              disableBackdropClick
-              disableEscapeKeyDown
-              aria-labelledby="confirmation-dialog-title"
-              open={this.state.open}
-              {...this.state.other}
-              className={"change-pass-dialog profile-content addBlockPopup"}
-            >
-              <DialogTitle id="confirmation-dialog-title">
-                <div className="green-header warning-header" style={{top:"0"}}><i class="material-icons">block</i> AdBlocker Detected</div>
-              </DialogTitle>
-              <DialogContent className="addBlockContent">
-                <p className="addBlockDesc">Please disable adblocker and reload page to access. We dont display ads on our network.</p>               
-                <div className="addBlockbtn">
-                  <Button
-                    className="refreshBtn"
-                    color="primary"
-                    type="button"
-                    onClick={this.handleCloseDialog}><i className="material-icons">refresh</i> Refresh
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </AdblockDetect>
-          <div className="login-inner-cover">            
-            <div className="logo-content loginLogoMain">
-              <div className="loginLogoInner">
-                <img src={logo} alt="logo" />
-              </div>
+      <div className="login-outer-cover box Dashboard-wrapper-1">
+        <div className="login-cover Dashboard-wrapper-1">
+          <div className="logo-content loginLogoMain">
+            <div className="loginLogoInner">
+              <img height="150px" src={logo} alt="logo" />
             </div>
-            <div className="green-header">Login</div>
+          </div>
+          <div className="login-inner-cover">
             <div className="login-content">
               <div className="Login">
                 <form onSubmit={this.handleSubmit} noValidate>
                   <FormGroup>
-                    {/* <InputLabel>Email Address</InputLabel> */}
                     <TextField
-                      label="Email Address"
+                      label="Email Address *"
                       type="email"
                       name="email"
                       data-validators="isRequired,isAlpha"
@@ -347,15 +205,15 @@ export default class Login extends Component {
                       fieldName="email"
                     />
                   </FormGroup>
-
-                  <FormGroup>
+                  <FormGroup className="possword-input">
                     <TextField
-                      label="Password"
-                      type="password"
+                      label="Password *"
+                      type={this.state.passwordType}
                       name="password"
                       data-validators="isRequired,isAlpha"
                       onChange={event => this.handleUserInput(event)}
                       value={this.state.password}
+                      inputProps={{ maxLength: MAX_PASSWORD_LENGTH }}
                     />
                     <FormErrors
                       show={!this.state.passwordValid}
@@ -365,9 +223,8 @@ export default class Login extends Component {
                   </FormGroup>
                   <div className="action-btns">
                     <Button
-                      // variant="contained"
                       color="primary"
-                      className={this.state.loading ? "buttonSuccess" : ""}
+                      className={this.state.loading ? "buttonSuccess btn1" : "btn1"}
                       disabled={this.state.loading || !this.validateForm()}
                       type="submit"
                     >
@@ -379,14 +236,6 @@ export default class Login extends Component {
                         />
                       )}
                     </Button>
-                    <div className="signup-cover loginPageLink">
-                      <Link
-                        href={baseRoutes.signup.path}
-                        to={baseRoutes.signup.path}
-                      >
-                        {baseRoutes.signup.pathName}
-                      </Link>
-                    </div>
                   </div>
                 </form>
               </div>
@@ -397,3 +246,7 @@ export default class Login extends Component {
     );
   }
 }
+export const Login = connect(
+  mapStateToProps, mapDispatchToProps
+)(LoginClass);
+export default Login;

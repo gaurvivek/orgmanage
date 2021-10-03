@@ -2,12 +2,9 @@ import {
     REDUX_LOAD,
     DATA_LOADING_REDUX,
     STORED_TIMESTAMP,
-    USER_INFO_REDUX,
-    FETCH_PROJECT_LIST,
-    FETCH_TASK_LIST,
-    FETCH_COUNTRY_LIST,
-    FETCH_CATEGORY_LIST,
-    FETCH_GLOBAL_LIST,
+    FETCH_EMP_LIST,
+    FETCH_USER_DATA,
+    FETCH_AUTH_DATA,
 } from "../constants/action-types";
 
 export function reduxLoad(payload) {
@@ -19,22 +16,12 @@ export function dataLoadingFlag(payload) {
 export function addTimeStamp(payload) {
     return { type: STORED_TIMESTAMP, payload }
 };
-export function addUSerUInfo(payload) {
-    return { type: USER_INFO_REDUX, payload }
+export function empList(payload) {
+    return { type: FETCH_EMP_LIST, payload }
 };
-
-export function categoryList(payload) {
-    return { type: FETCH_CATEGORY_LIST, payload }
+export function userdata(payload) {
+    return { type: FETCH_USER_DATA, payload }
 };
-export function countryList(payload) {
-    return { type: FETCH_COUNTRY_LIST, payload }
-};
-export function globalLists(payload) {
-    return { type: FETCH_GLOBAL_LIST, payload }
-};
-export function projectList(payload) {
-    return { type: FETCH_PROJECT_LIST, payload }
-};
-export function taskList(payload) {
-    return { type: FETCH_TASK_LIST, payload }
+export function authData(payload) {
+    return { type: FETCH_AUTH_DATA, payload }
 };

@@ -19,17 +19,9 @@
 import DashboardIcons from "@material-ui/icons/Dashboard";
 import ReceiptIcon from '@material-ui/icons/Receipt';
 import DonutLargeIcon from '@material-ui/icons/DonutLarge';
-// import TrendingUpIcon from "@material-ui/icons/TrendingUp";
-import SettingIcon from "@material-ui/icons/Settings";
-
-// core components/views for Admin layout
 import Dashboard from "views/Dashboard/Dashboard.jsx";
 import Records from "views/Records/Records";
-import Tasks from "views/Tasks/Tasks";
-import SSs from "views/Setting/Setting";
 import { basePath, baseRoutes } from "base-routes";
-
-// const basePath = "/ab/asg";
 
 const dashboardRoutes = [
   {
@@ -43,31 +35,13 @@ const dashboardRoutes = [
   },
   {
     path: baseRoutes.records.useLink,
-    name: "Project Records",
+    name: "Employee Records",
     icon: DonutLargeIcon,
     component: Records,
     layout: "/admin",
     basePath: basePath,
     showInSideBar: true
   },
-  {
-    path: baseRoutes.tasks.useLink,
-    name: "Task Records",
-    icon: ReceiptIcon,
-    component: Tasks,
-    layout: "/admin",
-    basePath: basePath,
-    showInSideBar: false
-  },
-  // {
-  //   path: baseRoutes.profile.path,
-  //   name: baseRoutes.profile.pathName,
-  //   icon: PermContactCalendarIcon,
-  //   component: Profile,
-  //   layout: "/admin",
-  //   basePath: basePath,
-  //   showInSideBar: false
-  // },
   {
     path: "/",
     name: "Dashboard",
@@ -78,6 +52,4 @@ const dashboardRoutes = [
     showInSideBar: false
   }
 ];
-// console.log(dashboardRoutes);
-// debugger ;
 export default dashboardRoutes;

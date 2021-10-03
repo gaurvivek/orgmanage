@@ -85,6 +85,7 @@ import userImg from "assets/img/user_img.png"
 
 const mapStateToProps = state => {
   return {
+    userdataCal: state.userdata,
   };
 };
 class AdminNavbarLinksClass extends React.Component {
@@ -97,9 +98,14 @@ class AdminNavbarLinksClass extends React.Component {
       spinner: spinner,
       loading: false,
       reduxLoadFlag: false,
+      userDetail: this.props.userdataCal,
     };
   }
-
+  handleLogout = () => {
+    window.location.replace(baseRoutes.login.path);
+    userService.logout();
+    return true;
+  };
   render() {
     const { classes } = this.props;
     const styleuser = {
@@ -117,9 +123,31 @@ class AdminNavbarLinksClass extends React.Component {
       lineHeight: "normal",
       marginTop: "10px"
     };
+    const logoutStyle = {
+      float: "right",
+      display: "block",
+      width: "calc(100% - 50px)",
+      color: "#2680EB",
+      fontSize: "12px",
+      fontWeight: "400",
+      lineHeight: "normal",
+      marginTop: "4px"
+    };
     return (
-      <div className="mobileMenuSidebar">
-        
+      <div className="header_layout">
+        <div className={classes.manager + " header_btns"}>
+          <Link
+            href={basePath + baseRoutes.dashboard.path} ///${user.username}
+            to={basePath + baseRoutes.dashboard.path} ///${user.username}
+            style={userNameStyle}
+            className="header_link"
+          >
+            {this.state.userDetail.name}
+          </Link>
+          <Link className="header_link header_button" to="#" onClick={this.handleLogout} style={logoutStyle}>
+            Logout
+          </Link>
+        </div>
       </div>
     );
   }

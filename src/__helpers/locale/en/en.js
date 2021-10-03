@@ -5,5 +5,9 @@ const enMsg = {
   signUpFailedTitle: "Signup Failed",
   successSignUpTitle: "Signup successfully",
   connectionFailed: "Connection Failed",
+  inValidUser: "Invalid email address",
+  emailRequiredMsg: "Email is required",
+  passwordRequired: "Password is required",
+  passwordSort: "Password too short",
 }
 export default enMsg;

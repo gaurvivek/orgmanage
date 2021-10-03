@@ -16,43 +16,52 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import { FormErrors } from "components/Login/FormErrors";
 import { useDispatch, useSelector } from 'react-redux';
 import { uid } from "__helpers/utils";
-import { projectList } from 'js/actions';
+import { empList, reduxLoad } from 'js/actions';
 import { userService } from "_services/user.service";
 
-const AddProject = (props) => {
-    const { openProjects, confirmModalClose, loading, projectId } = props;
+const AddEmp = (props) => {
+    const { openProjects, confirmModalClose, loading, projectId, empId } = props;
     const dispatch = useDispatch();
-    let projectListArr = useSelector((state) => state.projectList);
-    const updatedProject = projectListArr.filter((tList) => {
-        if (tList.uid == projectId) {
-            return tList;
+    let empListArr = useSelector((state) => state.empList);
+    const empDetails = empListArr.filter((eList) => {
+        if (eList.id == empId) {
+            return eList;
         }
-    })
+    });
     const errorList = {
-        projectName: "",
-        projectDescription: "",
+        eName: "",
+        eAge: "",
+        eEmail: "",
+        ePhone: "",
     }
     const errorValidList = {
-        projectName: false,
-        projectDescription: false,
+        eNameValid: true,
+        eAgeValid: true,
+        eEmailValid: true,
+        ePhoneValid: true,
     }
-    const [getProject, setProject] = useState("")
-    const [getProjectDes, setProjectDes] = useState("")
+    const [eName, setEName] = useState("")
+    const [eAge, setEAge] = useState("")
+    const [eEmail, setEEmail] = useState("")
+    const [ePhone, setEPhone] = useState("")
+    const [eGender, setEGender] = useState("male")
     const [getError, setError] = useState(errorList)
     const [formValid, setFormValid] = useState(errorValidList)
-    const [getProjectValid, setProjectValid] = useState(false)
     const [loader, setLoader] = useState(false)
-    const [getProjectDescriptionValid, setProjectDescriptionValid] = useState(false)
+
     useEffect(() => {
-        if (projectId) {
-            if (updatedProject && updatedProject.length) {
-                setProject(updatedProject[0].projectName);
-                setProjectDes(updatedProject[0].projectDesc);
+        if (empId) {
+            if (empDetails && empDetails.length) {
+                setEName(empDetails[0].name);
+                setEAge(empDetails[0].age);
+                setEEmail(empDetails[0].email);
+                setEPhone(empDetails[0].phoneNo);
+                setEGender(empDetails[0].gender);
                 setFormValid({})
             } else {
                 const showNotification = {
-                    title: 'Project Update',
-                    message: 'Project not found',
+                    title: 'Employee Update',
+                    message: 'Employee details not found',
                     type: "danger",
                 }
                 userService.showNotification(showNotification);
@@ -62,74 +71,139 @@ const AddProject = (props) => {
             }
         }
     }, [openProjects])
-    const validateForm = () => {
-        console.log(formValid)
-    }
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoader(true);
-        projectListArr = projectListArr && projectListArr.length ? projectListArr : [];
-        if (projectId) {
-            const updatedProject = projectListArr.filter((tList) => {
-                if (tList.uid == projectId) {
-                    tList.projectName = getProject;
-                    tList.projectDesc = getProjectDes;
+        dispatch(reduxLoad(false))
+        empListArr = empListArr && empListArr.length ? empListArr : [];
+        // check duplicate phone and email
+        let isEmailDuplicate = false;
+        empListArr.map((eList) => {
+            if (eList.email == eEmail && (!empId || eList.id != empId)) {
+                isEmailDuplicate = true;
+                return;
+            }
+        })
+        if (isEmailDuplicate) {
+            let newData = {}
+            if (isEmailDuplicate){
+                errorList.eEmail = "Email should be unique";
+                newData.eEmailValid = true
+            }
+            setError(errorList);
+            setFormValid(newData);
+            setLoader(false);
+            console.log(errorList, newData)
+            return false;
+        }
+        if (empId) {
+            const updatedEmp = empListArr.filter((tList) => {
+                if (tList.id == empId) {
+                    tList.name = eName;
+                    tList.email = eEmail;
+                    tList.gender = eGender;
+                    tList.age = eAge;
+                    tList.phoneNo = ePhone;
                 }
                 return tList;
             })
-            dispatch(projectList(updatedProject));
+            dispatch(empList(updatedEmp));
         } else {
             const data = {
-                uid: uid(),
-                projectName: getProject,
-                projectDesc: getProjectDes,
+                id: uid(),
+                name: eName,
+                email: eEmail,
+                gender: eGender,
+                age: eAge,
+                phoneNo: ePhone,
                 createDate: new Date(),
             }
-            projectListArr.push(data)
-            dispatch(projectList(projectListArr));
+            empListArr.push(data)
+            dispatch(empList(empListArr));
         }
-        setProject("");
-        setProjectDes("");
+        setEName("")
+        setEAge("")
+        setEEmail("")
+        setEPhone("")
+        setEGender("male")
         setLoader(false);
         setFormValid(errorValidList)
-        confirmModalClose();
+        dispatch(reduxLoad(true))
         const showNotification = {
-            title: projectId ? 'Update Project' : 'Create Project',
-            message: projectId ? 'Project updated successfully.' : 'Project created successfully.',
+            title: empId ? 'Update Employee' : 'Create Employee',
+            message: empId ? 'Employee updated successfully.' : 'Employee created successfully.',
             type: "success",
         }
         userService.showNotification(showNotification);
+        setTimeout(function () {
+            confirmModalClose();
+        }, 100);
     }
     const handleInput = (e) => {
-        const { name, value } = e.target;
-        let projectValid = getProjectValid;
-        let projectDescriptionValid = getProjectDescriptionValid;
+        let { name, value } = e.target;
         let getErrorList = getError;
         let getFormValid = formValid;
+        const re = /^\d+\.?\d{0,2}$/;
         switch (name) {
-            case 'projectName':
-                setProject(value);
-                projectValid = value.trim().length > 0;
-                getErrorList.projectName = projectValid ? '' : "Enter project name";
-                if (projectValid) {
-                    delete getFormValid.projectName;
+            case 'eName':
+                setEName(value);
+                let eNameValid = value.trim().length > 0;
+                getErrorList.eName = eNameValid ? '' : "Enter employee name";
+                if (eNameValid) {
+                    delete getFormValid.eNameValid;
                 } else {
-                    getFormValid.projectName = false;
+                    getFormValid.eNameValid = true;
                 }
                 break;
-            case 'projectDescription':
-                setProjectDes(value);
-                projectDescriptionValid = value.trim().length > 0;
-                getErrorList.projectDescription = projectDescriptionValid ? '' : "Enter project description";
-                if (projectDescriptionValid) {
-                    delete getFormValid.projectDescription;
+            case 'eEmail':
+                setEEmail(value);
+                let eEmailValid = value.trim().length > 0;
+                getErrorList.eEmail = eEmailValid ? '' : "Enter employee email";
+                if (eEmailValid) {
+                    delete getFormValid.eEmailValid;
                 } else {
-                    getFormValid.projectDescription = false;
+                    getFormValid.eEmailValid = true;
+                }
+                break;
+            case 'eAge':
+                setEAge(value);
+                let eAgeValid = value > 0 && value <= 150;
+                getErrorList.eAge = eAgeValid ? '' : "Enter employee age between 1 to 150 years";
+                if (eAgeValid) {
+                    delete getFormValid.eAgeValid;
+                } else {
+                    getFormValid.eAgeValid = true;
+                }
+                break;
+            case 'ePhone':
+                if (value === '' || re.test(value)) {
+                    value = value
+                } else {
+                    if (re.test(eName))
+                        value = eName;
+                    else
+                        value = 0;
+                }
+                setEPhone(value);
+                let ePhoneValid = true;
+                if (value > 0){
+                    if (value.length != 10){
+                        ePhoneValid = false
+                        getErrorList.ePhone = "Phone number must be 10 digit long";
+                    }
+                }else{
+                    ePhoneValid = false
+                    getErrorList.ePhone = "Enter employee phone number";
+                }
+                
+                if (ePhoneValid) {
+                    delete getFormValid.ePhoneValid;
+                } else {
+                    getFormValid.ePhoneValid = true;
                 }
                 break;
         }
-        setProjectValid(projectValid)
-        setProjectDescriptionValid(projectDescriptionValid)
     }
     return (
         <Dialog
@@ -138,44 +212,99 @@ const AddProject = (props) => {
             open={openProjects}
         >
             <DialogTitle className="add-modal-title" id="discharge-planner-dialog-title">
-                {projectId ? "Update" : "Create"} Project
-                <IconButton aria-label="close">
-                    <CloseIcon onClick={confirmModalClose} />
-                </IconButton>
+                {empId ? "Update" : "Create"} Employee
             </DialogTitle>
             <form onSubmit={handleSubmit} noValidate>
                 <DialogContent>
                     <div className="dollar_modal">
                         <TextField
                             id=""
-                            label="Project Name"
+                            label="Employee Name"
                             className="full-width-input"
-                            name="projectName"
+                            name="eName"
                             InputLabelProps={{ className: "required-label" }}
-                            value={getProject}
+                            value={eName}
                             onChange={e => handleInput(e)} />
                         <FormErrors
-                            show={!getProjectValid}
+                            show={formValid.eNameValid}
                             formErrors={getError}
-                            fieldName="projectName"
+                            fieldName="eName"
                         />
                     </div>
                     <div className="dollar_modal">
                         <TextField
-                            id="standard-basic"
-                            label="Project Description"
+                            id=""
+                            label="Employee Email"
                             className="full-width-input"
-                            name="projectDescription"
+                            name="eEmail"
                             InputLabelProps={{ className: "required-label" }}
-                            multiline
-                            rows={3}
-                            value={getProjectDes}
+                            value={eEmail}
                             onChange={e => handleInput(e)} />
                         <FormErrors
-                            show={!getProjectDescriptionValid}
+                            show={formValid.eEmailValid}
                             formErrors={getError}
-                            fieldName="projectDescription"
+                            fieldName="eEmail"
                         />
+                    </div>
+                    <div className="dollar_modal">
+                        <TextField
+                            id=""
+                            label="Employee Phone"
+                            className="full-width-input"
+                            name="ePhone"
+                            InputLabelProps={{ className: "required-label" }}
+                            value={ePhone}
+                            onChange={e => handleInput(e)} />
+                        <FormErrors
+                            show={formValid.ePhoneValid}
+                            formErrors={getError}
+                            fieldName="ePhone"
+                        />
+                    </div>
+                    <div className="dollar_modal">
+                        <TextField
+                            id=""
+                            label="Employee Age"
+                            className="full-width-input"
+                            name="eAge"
+                            type="number"
+                            InputLabelProps={{ className: "required-label" }}
+                            value={eAge}
+                            onChange={e => handleInput(e)} />
+                        <FormErrors
+                            show={formValid.eAgeValid}
+                            formErrors={getError}
+                            fieldName="eAge"
+                        />
+                    </div>
+                    <div className="dollar_modal">
+                        <TextField
+                            label="Employee Gender"
+                            select
+                            InputLabelProps={{ className: "required-label" }}
+                            name="eGender"
+                            className="full-width-input"
+                            autoComplete="off"
+                            value={eGender}
+                            data-validators="isRequired,isAlpha"
+                            onChange={e => setEGender(e.target.value)}
+                        >
+                            <MenuItem
+                                value={"male"}
+                            >
+                                Male
+                            </MenuItem>
+                            <MenuItem
+                                value={"female"}
+                            >
+                                Female
+                            </MenuItem>
+                            <MenuItem
+                                value={"other"}
+                            >
+                                Other
+                            </MenuItem>
+                        </TextField>
                     </div>
                 </DialogContent>
                 <DialogActions className="modal-actions" justify="center">
@@ -186,7 +315,7 @@ const AddProject = (props) => {
                                 className="buttonProgress"
                             />
                         )}
-                        {projectId ? "Update" : "Create"}
+                        {empId ? "Update" : "Create"}
                     </Button>
                     <Button color="primary" className="btn2" onClick={confirmModalClose}>
                         Cancel
@@ -197,4 +326,4 @@ const AddProject = (props) => {
     )
 }
 
-export default AddProject
+export default AddEmp

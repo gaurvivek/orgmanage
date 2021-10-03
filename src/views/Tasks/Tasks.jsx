@@ -40,7 +40,7 @@ import DateFnsUtils from "@date-io/date-fns";
 import AddTasks from "./TasksPopup";
 import { basePath, baseRoutes } from "base-routes";
 import Icon from '@material-ui/core/Icon';
-import { taskList, reduxLoad } from 'js/actions';
+import { empList, reduxLoad } from 'js/actions';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts';
 
@@ -57,7 +57,7 @@ const ref = React.createRef();
 function mapDispatchToProps(dispatch) {
     return {
         // addArticle: article => dispatch(addArticle(article))
-        taskList: projects => dispatch(taskList(projects))
+        empList: projects => dispatch(empList(projects))
     };
 }
 const mapStateToProps = state => {
@@ -339,7 +339,7 @@ class TasksClass extends React.Component {
         const updatedTaskList = taskListArr.filter((tList) => {
             return tList.uid == taskId ? null : tList;
         })
-        this.props.taskList(updatedTaskList);
+        this.props.empList(updatedTaskList);
         const updatedPTaskList = projectTaskList.filter((tList) => {
             return tList.uid == taskId ? null : tList;
         })

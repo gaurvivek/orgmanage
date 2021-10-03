@@ -16,7 +16,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import { FormErrors } from "components/Login/FormErrors";
 import { useDispatch, useSelector } from 'react-redux';
 import { uid } from "__helpers/utils";
-import { taskList, reduxLoad } from 'js/actions';
+import { empList, reduxLoad } from 'js/actions';
 import { userService } from "_services/user.service";
 
 const AddTask = (props) => {
@@ -85,7 +85,7 @@ const AddTask = (props) => {
                 }
                 return tList;
             })
-            dispatch(taskList(updatedTask));
+            dispatch(empList(updatedTask));
         } else {
             const data = {
                 uid: uid(),
@@ -97,7 +97,7 @@ const AddTask = (props) => {
                 createDate: new Date(),
             }
             taskListArr.push(data)
-            dispatch(taskList(taskListArr));
+            dispatch(empList(taskListArr));
         }
         setTaskName("");
         setTaskDescription("");

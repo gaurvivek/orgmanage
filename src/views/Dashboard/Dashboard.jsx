@@ -17,23 +17,21 @@ import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardS
 import { connect } from "react-redux";
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { ReactComponent as ProjectsIcon } from "assets/img/assets.svg"
-import { ReactComponent as TasksIcon } from "assets/img/advert.svg"
-import { taskList, reduxLoad, projectList } from 'js/actions';
+import { ReactComponent as ProjectsIcon } from "assets/img/people.svg"
+import { ReactComponent as TasksIcon } from "assets/img/vendor.svg"
+import { } from 'js/actions';
 import { uid } from "__helpers/utils";
 import { userService } from "_services/user.service";
 
 function mapDispatchToProps(dispatch) {
   return {
-    projectList: projects => dispatch(projectList(projects)),
-    taskList: projects => dispatch(taskList(projects))
   };
 }
 const mapStateToProps = state => {
   return {
     reduxLoadFlag: state.reduxLoadFlag,
-    taskListArr: state.taskList,
-    projectListArr: state.projectList,
+    empListArr: state.empList,
+    userdataCal: state.userdata,
   };
 };
 
@@ -41,8 +39,8 @@ class DashboardClass extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      projectListArr: this.props.projectListArr ? this.props.projectListArr : [],
-      taskListArr: this.props.taskListArr ? this.props.taskListArr : [],
+      empListArr: this.props.empListArr ? this.props.empListArr : [],
+      userdataCal: this.props.userdataCal ? this.props.userdataCal : {},
       priorityChartOptions: {},
       statusChartOptions: {},
     };
@@ -50,71 +48,39 @@ class DashboardClass extends React.Component {
     this.getTaskStatusChart = this.getTaskStatusChart.bind(this);
   }
   async componentDidMount() {
-    // create dummy tasks and projects
-    if (!this.state.projectListArr || !this.state.projectListArr.length) {
-      const projectId = uid();
-      const data = [{
-        uid: projectId,
-        projectName: "Health Care Project",
-        projectDesc: "Health care project to manage patients",
-        createDate: new Date(),
-      }]
-      this.props.projectList(data);
-      const dataArr = [{
-        uid: uid(),
-        projectId: projectId,
-        taskName: "Design Wireframs",
-        taskDescription: "Design wireframs and approve from clients",
-        taskPriority: "medium",
-        taskStatus: "new",
-        createDate: new Date(),
-      }, {
-        uid: uid(),
-        projectId: projectId,
-        taskName: "Design Database",
-        taskDescription: "Design database schema with team",
-        taskPriority: "low",
-        taskStatus: "process",
-        createDate: new Date(),
-      }, {
-        uid: uid(),
-        projectId: projectId,
-        taskName: "Sprint Plan",
-        taskDescription: "Manage board and create tasks",
-        taskPriority: "high",
-        taskStatus: "new",
-        createDate: new Date(),
-      },
-      ]
-      this.props.taskList(dataArr);
+    this.getTaskPriorityChart();
+    this.getTaskStatusChart();
+  }
+  componentDidUpdate() {
+    if (this.props.reduxLoadFlag != undefined && this.state.reduxLoadFlag != this.props.reduxLoadFlag) {
+      let empListArr = this.props.empListArr && this.props.empListArr.length ? this.props.empListArr : [];
       this.setState({
-        projectListArr: data,
-        taskListArr: dataArr,
+        taskListArr: empListArr,
+        reduxLoadFlag: this.props.reduxLoadFlag,
       }, () => { this.getTaskPriorityChart(); this.getTaskStatusChart(); })
-    }else{
-      this.getTaskPriorityChart();
-      this.getTaskStatusChart();
     }
   }
   getTaskPriorityChart() {
-    let originalTaskListArr = this.state.taskListArr;
+    let empListArr = this.state.empListArr;
     const pieChartData = [];
-    let lowTasks = 0;
-    let mediumTasks = 0;
-    let highTasks = 0;
-    originalTaskListArr.map((tList) => {
-      if (tList.taskPriority == "low") {
-        lowTasks++;
-      } else if (tList.taskPriority == "medium") {
-        mediumTasks++;
-      } else {
-        highTasks++;
-      }
-    })
-    pieChartData.push({ name: "Low", y: lowTasks * 100 / originalTaskListArr.length });
-    pieChartData.push({ name: "Medium", y: mediumTasks * 100 / originalTaskListArr.length });
-    pieChartData.push({ name: "High", y: highTasks * 100 / originalTaskListArr.length });
-    let priorityChartOptions = {
+    let male = 0;
+    let female = 0;
+    let other = 0;
+    if (empListArr && empListArr.length) {
+      empListArr.map((tList) => {
+        if (tList.gender == "male") {
+          male++;
+        } else if (tList.gender == "female") {
+          female++;
+        } else {
+          other++;
+        }
+      })
+      pieChartData.push({ name: "Male", y: male * 100 / empListArr.length, count: male });
+      pieChartData.push({ name: "Female", y: female * 100 / empListArr.length, count: female });
+      pieChartData.push({ name: "Other", y: other * 100 / empListArr.length, count: other });
+
+    } let priorityChartOptions = {
       chart: {
         plotBackgroundColor: null,
         plotBorderWidth: null,
@@ -122,10 +88,23 @@ class DashboardClass extends React.Component {
         type: 'pie'
       },
       title: {
-        text: 'Tasks Priorities Chart'
+        text: 'Employee Gender Chart'
       },
       tooltip: {
-        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        useHTML: true,
+        formatter: function () {
+          return `
+            <div>
+              <b>${this.key}</b>
+              <p>
+                <ul style="color:${this.color}; list-style-type:upper-roman;">
+                  <li style="font-size: 14px;margin-left: 15px;list-style-type: circle;">
+                    <span style="color: black">Employees: <b>${this.point.count}</b><span>
+                  </li>
+                </ul>
+              </p>
+            </div>`;
+        }
       },
       colors: ['#32b462', '#b7cf1f', '#c2303f'],
       accessibility: {
@@ -144,7 +123,7 @@ class DashboardClass extends React.Component {
         }
       },
       series: [{
-        name: 'Tasks',
+        name: 'Employees',
         colorByPoint: true,
         data: pieChartData,
       }]
@@ -153,23 +132,45 @@ class DashboardClass extends React.Component {
     this.setState({ priorityChartOptions: priorityChartOptions, })
   }
   getTaskStatusChart() {
-    let originalTaskListArr = this.state.taskListArr;
+    let empListArr = this.state.taskListArr;
     const pieChartData = [];
-    let newTasks = 0;
-    let progressTasks = 0;
-    let doneTasks = 0;
-    originalTaskListArr.map((tList) => {
-      if (tList.taskStatus == "new") {
-        newTasks++;
-      } else if (tList.taskStatus == "progress") {
-        progressTasks++;
-      } else {
-        doneTasks++;
-      }
-    })
-    pieChartData.push({ name: "New", y: newTasks * 100 / originalTaskListArr.length });
-    pieChartData.push({ name: "In Progress", y: progressTasks * 100 / originalTaskListArr.length });
-    pieChartData.push({ name: "Done", y: doneTasks * 100 / originalTaskListArr.length });
+    let upto10 = 0;
+    let upto20 = 0;
+    let upto30 = 0;
+    let upto40 = 0;
+    let upto50 = 0;
+    let upto60 = 0;
+    let upto70 = 0;
+    let above70 = 0;
+    if (empListArr && empListArr.length) {
+      empListArr.map((tList) => {
+        if (Number(tList.age) <= 10) {
+          upto10++;
+        } else if (Number(tList.age) <= 20) {
+          upto20++;
+        } else if (Number(tList.age) <= 30) {
+          upto30++;
+        } else if (Number(tList.age) <= 40) {
+          upto40++;
+        } else if (Number(tList.age) <= 50) {
+          upto50++;
+        } else if (Number(tList.age) <= 60) {
+          upto60++;
+        } else if (Number(tList.age) <= 70) {
+          upto70++;
+        } else {
+          above70++;
+        }
+      })
+      pieChartData.push({ name: "0 - 10", y: upto10 * 100 / empListArr.length, count:upto10 });
+      pieChartData.push({ name: "10 - 20", y: upto20 * 100 / empListArr.length, count:upto20 });
+      pieChartData.push({ name: "20 - 30", y: upto30 * 100 / empListArr.length, count:upto30 });
+      pieChartData.push({ name: "30 - 40", y: upto40 * 100 / empListArr.length, count:upto40 });
+      pieChartData.push({ name: "40 - 50", y: upto50 * 100 / empListArr.length, count:upto50 });
+      pieChartData.push({ name: "50 - 60", y: upto60 * 100 / empListArr.length, count:upto60 });
+      pieChartData.push({ name: "60 - 70", y: upto70 * 100 / empListArr.length, count:upto70 });
+      pieChartData.push({ name: "70 - 120", y: above70 * 100 / empListArr.length, count:above70 });
+    }
     let statusChartOptions = {
       chart: {
         plotBackgroundColor: null,
@@ -178,12 +179,25 @@ class DashboardClass extends React.Component {
         type: 'pie'
       },
       title: {
-        text: 'Tasks Status Chart'
+        text: 'Age Group Chart'
       },
       tooltip: {
-        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+        useHTML: true,
+        formatter: function () {
+          return `
+            <div>
+              <b>${this.key}</b>
+              <p>
+                <ul style="color:${this.color}; list-style-type:upper-roman;">
+                  <li style="font-size: 14px;margin-left: 15px;list-style-type: circle;">
+                    <span style="color: black">Age: <b>${this.point.count}</b><span>
+                  </li>
+                </ul>
+              </p>
+            </div>`;
+        }
       },
-      colors: ['#32b462', '#b7cf1f', '#c2303f'],
+      colors: ['#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
       accessibility: {
         point: {
           valueSuffix: '%'
@@ -200,7 +214,7 @@ class DashboardClass extends React.Component {
         }
       },
       series: [{
-        name: 'Tasks',
+        name: 'Age',
         colorByPoint: true,
         data: pieChartData,
       }]
@@ -208,11 +222,31 @@ class DashboardClass extends React.Component {
     };
     this.setState({ statusChartOptions: statusChartOptions, })
   }
+  getMaleEmp() {
+    const empListArr = this.state.empListArr;
+    let count = 0;
+    empListArr && empListArr.length && empListArr.map((eList) => {
+      if (eList.gender == "male") {
+        count++;
+      }
+    })
+    return <p>{count ? count : "No"} employees</p>
+  }
+  getFemailEmp() {
+    const empListArr = this.state.empListArr;
+    let count = 0;
+    empListArr && empListArr.length && empListArr.map((eList) => {
+      if (eList.gender == "female") {
+        count++;
+      }
+    })
+    return <p>{count ? count : "No"} employees</p>
+  }
   render() {
     const { classes } = this.props;
     const {
       priorityChartOptions, statusChartOptions,
-      projectListArr, taskListArr
+      empListArr, userdataCal
     } = this.state;
     const test1 = "test-cover1";
     const clock_cover = "clock-cover";
@@ -230,19 +264,27 @@ class DashboardClass extends React.Component {
         {/* <NotificationContainer/> */}
         <GridContainer>
           <GridItem xs={12} sm={6}>
-            <Card className={`dash-tiles box light_green_color`}>
-              <CardHeader color="success" stats icon>
-                <CardIcon color="success" className={"box-image-cover new-cover"} style={styletest}>
-                  <ProjectsIcon className="card_img" fill='white' stroke='transparent' />
+            <Card className={"dash-tiles box temp_card_color box_card"}>
+              <CardHeader color="danger" stats icon>
+                <CardIcon color="success" className={test1 + " new-cover"} style={styletest1}>
+                  <TasksIcon className="card_img" fill='white' stroke='transparent' />
                 </CardIcon>
-                <p className={classes.cardCategory + " white-text current-air"}>My Projects</p>
-                <h3 className={classes.cardTitle + " white-text air-quality"}>{projectListArr && projectListArr.length ? projectListArr.length : "No project"}</h3>
+                <p className={classes.cardCategory + " white-text current-air"}>My Profile</p>
+                <span className="full-width d-flex">
+                  <span className="tempratures"><p>Name</p> {userdataCal && userdataCal.name ? userdataCal.name : "Admin"}</span>
+                  <span className="tempratures"><p>Email</p> {userdataCal && userdataCal.userName ? userdataCal.userName : "N/A"}</span>
+                  <span className="tempratures"><p>PhoneNo</p> {userdataCal && userdataCal.phoneNo ? userdataCal.phoneNo : "N/A"}</span>
+                </span>
+                <span className="full-width d-flex">
+                  <span className="tempratures"><p>Gender</p> {userdataCal && userdataCal.gender ? userdataCal.gender : "N/A"}</span>
+                  <span className="tempratures"><p>Age</p> {userdataCal && userdataCal.age ? userdataCal.age + " years" : "N/A"}</span>
+                </span>
               </CardHeader>
               <CardFooter stats>
-                <div className={classes.stats + " white-text"}>
+                <div className={classes.stats}>
                   <img
                     src={clock}
-                    className={clock_cover + " white-text"}
+                    className={clock_cover}
                     style={clock_style}
                     alt="time"
                   />
@@ -252,19 +294,25 @@ class DashboardClass extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={6}>
-            <Card className={"dash-tiles box temp_card_color box_card"}>
-              <CardHeader color="danger" stats icon>
-                <CardIcon color="success" className={test1 + " new-cover"} style={styletest1}>
-                  <TasksIcon className="card_img" fill='white' stroke='transparent' />
+            <Card className={`dash-tiles box light_green_color`}>
+              <CardHeader color="success" stats icon>
+                <CardIcon color="success" className={"box-image-cover new-cover"} style={styletest}>
+                  <ProjectsIcon className="card_img" fill='white' stroke='transparent' />
                 </CardIcon>
-                <p className={classes.cardCategory + " white-text current-air"}>My Tasks</p>
-                <h3 className={classes.cardTitle}>{taskListArr && taskListArr.length ? taskListArr.length : "No tasks"}</h3>
+                <p className={classes.cardCategory + " white-text current-air"}>Users</p>
+                <span className="full-width d-flex">
+                  <span className="tempratures"><p>Total Employees</p> {empListArr && empListArr.length ? empListArr.length : "No employees"}</span>
+                </span>
+                <span className="full-width d-flex">
+                  <span className="tempratures"><p>Male</p> {this.getMaleEmp()}</span>
+                  <span className="tempratures"><p>Female</p> {this.getFemailEmp()}</span>
+                </span>
               </CardHeader>
               <CardFooter stats>
-                <div className={classes.stats}>
+                <div className={classes.stats + " white-text"}>
                   <img
                     src={clock}
-                    className={clock_cover}
+                    className={clock_cover + " white-text"}
                     style={clock_style}
                     alt="time"
                   />
