@@ -1,7 +1,7 @@
 # OrgManage
-To orgination employee tasks and view reports using react application
+To organization employee tasks and view reports using react application
 
-This is a open project to manage orgination employees.
+This is a open project to manage organization employees.
 
 # Login
 Use below login credentials
