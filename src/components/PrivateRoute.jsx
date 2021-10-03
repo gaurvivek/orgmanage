@@ -8,7 +8,7 @@ export const PrivateRoute = ({ component: Component, ...rest }) => {
     let authDataObj = useSelector((state) => state.authData);
     return (
         <Route {...rest} render={props => (
-            authDataObj.accessToken
+            authDataObj && authDataObj.accessToken
                 ? <Component {...props} />
                 : <Redirect to={{ pathname: baseRoutes.login.path }} />
         )} />
